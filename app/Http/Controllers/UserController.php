@@ -9,6 +9,25 @@ use Hash;
 
 class UserController extends Controller
 {
+    public function index(Request $request){
+        $user = Auth::user();
+        if($user->role != 'Admin')return back()->with('success', "You can't access to this page.");
+        $users = User::paginate(10);
+        $current_page = 'user';
+        if(null !== $request->get('page')){
+            $page_number = $request->get('page');
+        }else{
+            $page_number = 1;
+        }
+        
+        $data = array(
+            'users' => $users,
+            'page_number' => $page_number,
+            'current_page' => $current_page
+        );
+        return view('users', $data);
+    }
+    
     public function profile(Request $request){
         $user = Auth::user();
         $current_page = 'profile';
@@ -38,5 +57,25 @@ class UserController extends Controller
         }
         $user->update();
         return back()->with("success", "Updated User Successfully.");
+    }
+
+    public function create(Request $request){
+        $request->validate([
+            'name'=>'required',
+            'firstname'=>'required',
+            'lastname'=>'required',
+            'phone'=>'required',
+            'password'=>'required|string|min:6|confirmed'
+        ]);
+        User::create([
+            'name' => $request->get('name'),
+            'email' => $request->get('name'),
+            'firstname' => $request->get('firstname'),
+            'lastname' => $request->get('lastname'),
+            'phone' => $request->get('phone'),
+            'role' => $request->get('role'),
+            'password' => Hash::make($request->get('password'))
+        ]);
+        return back()->with('success', 'Created User Successfully!');
     }
 }
